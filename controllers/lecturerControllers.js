@@ -1,24 +1,17 @@
 const express = require("express")
 const db = require("../models/db")
+const router = express.Router()
 
-const app = express()
-const port = 3000
-
-app.listen(port, ()=> {
-    console.log(`Server running at http://localhost:${port}`)
-})
-
-app.use(express.json())
 
 // Main Page GET request
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
     res.status(200).json({
         message: "Welcome to lecturer API"
     })
 })
 
 // GET all lecturer data
-app.get("/lecturers", (req, res) => {
+router.get("/lecturers", (req, res) => {
     const query = "SELECT * FROM lecturer_data"
     db.query(query, (err, results) => {
         if (err) {
@@ -33,7 +26,7 @@ app.get("/lecturers", (req, res) => {
 })
 
 // GET lecturer data based on nidn
-app.get("/lecturer/search", (req, res) => {
+router.get("/lecturer/search", (req, res) => {
     const nidn = req.query.nidn
     const query = "SELECT * FROM lecturer_data WHERE nidn = ?"
     if (!nidn) {
@@ -56,7 +49,7 @@ app.get("/lecturer/search", (req, res) => {
 })
 
 // POST req to add new lecturer data
-app.post("/add-lecturer", (req, res) => {
+router.post("/add-lecturer", (req, res) => {
     const {nidn, name, title, gender, faculty} = req.body
 
     if (!nidn || !name || !title || !gender || !faculty) {
@@ -74,7 +67,7 @@ app.post("/add-lecturer", (req, res) => {
 })
 
 // PUT req to edit a lecturer data based on nidn
-app.put("/lecturer/edit", (req, res) => {
+router.put("/lecturer/edit", (req, res) => {
     const nidnReq = req.query.nidn
     const {nidn, name, title, gender, faculty} = req.body
     const query = "UPDATE lecturer_data SET nidn = ?, name = ?, title = ?, gender = ?, faculty = ? WHERE nidn = ?"
@@ -83,9 +76,13 @@ app.put("/lecturer/edit", (req, res) => {
         return res.status(400).json({ message: "Query parameter nidn is required" });
     }
 
+    if (!nidn || !name || !title || !gender || !faculty) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
     db.query(query, [nidn, name, title, gender, faculty, nidnReq], (err, results) => {
         if (err) {
-            res.status(500).json({message: "Data can't be empty", error: err})
+            res.status(500).json({message: "Internal Server Error", error: err})
         } else if (results.affectedRows === 0) {
             res.status(404).json({message: "nidn didn't match any"})
         } else {
@@ -95,7 +92,7 @@ app.put("/lecturer/edit", (req, res) => {
 })
 
 // DELETE request handler based on
-app.delete("/lecturer/delete", (req, res) => {
+router.delete("/lecturer/delete", (req, res) => {
     const nidn = req.query.nidn
     const query = "DELETE FROM lecturer_data WHERE nidn = ?"
     if (!nidn) {
@@ -121,6 +118,8 @@ app.delete("/lecturer/delete", (req, res) => {
 })
 
 // Handle not found service
-app.use((req, res) => {
+router.use((req, res) => {
     res.status(404).json({message: "Service Not Found!"})
 })
+
+module.exports = router
