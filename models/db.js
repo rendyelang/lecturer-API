@@ -1,17 +1,17 @@
 const mysql = require("mysql")
 
 const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "root",
-    database: "lecturer"
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWROD,
+    database: process.env.DB_NAME
 })
 
 connection.connect((err) => {
     if (err) {
         console.log("Failed to connect database!")
     } else {
-        console.log("Connection Succeed")
+        console.log("Database connected")
     }
 })
 
