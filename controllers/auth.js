@@ -1,13 +1,11 @@
 const bcrypt = require("bcrypt")
-const db = require("../models/db")
+const db = require("../config/db")
+const jwt = require("jsonwebtoken")
 
 const signUp = (req, res) => {
     const {username, password} = req.body
-    if (!username || !password) {
-        return res.status(400).json({message: "Username and password are required"})
-    }
     
-    const isUserExist = "SELECT * FROM admin WHERE username = ?"
+    const isUserExist = "SELECT * FROM user WHERE username = ?"
     db.query(isUserExist, [username], (err, results) => {
         if (err) {
             return res.status(500).json({message: "Internal Server Error"})
@@ -17,7 +15,7 @@ const signUp = (req, res) => {
         
         const hashedPassword = bcrypt.hashSync(password, 10)
 
-        const query = "INSERT INTO admin (username, password) VALUES (?, ?)"
+        const query = "INSERT INTO user (username, password) VALUES (?, ?)"
         db.query(query, [username, hashedPassword], (err, results) => {
             if (err) {
                 res.status(500).json({message: "Internal Server Error", error: err})
@@ -30,11 +28,12 @@ const signUp = (req, res) => {
 
 const signIn = (req, res) => {
     const {username, password} = req.body
+
     if (!username || !password) {
         return res.status(400).json({message: "Username and password are required"})
     }
 
-    const query = "SELECT * FROM admin WHERE username = ?"
+    const query = "SELECT * FROM user WHERE username = ?"
     db.query(query, [username], (err, results) => {
         if (err) {
             return res.status(500).json({message: "Internal Server Error"})
@@ -48,7 +47,18 @@ const signIn = (req, res) => {
             return res.status(400).json({message: "Invalid password"})
         }
 
-        res.status(200).json({message: "Login success"})
+        const token = jwt.sign({username: user.username}, process.env.JWT_SECRET_KEY, {expiresIn: "1h"})
+        res.status(200).json({
+            message: "Login success",
+            data: {
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role
+                },
+                token: token
+            }
+        })
     })
 }
 

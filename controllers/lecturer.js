@@ -1,4 +1,5 @@
-const db = require("../models/db")
+const db = require("../config/db")
+const lecturerModel = require("../models/lecturer")
 
 const getMainPage = (req, res) => {
     res.status(200).json({
